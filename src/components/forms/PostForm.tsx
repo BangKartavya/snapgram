@@ -2,38 +2,50 @@ import {zodResolver} from "@hookform/resolvers/zod";
 import {useForm} from "react-hook-form";
 import {z} from "zod";
 import {Button} from "@/components/ui/button"
-import {
-    Form,
-    FormControl,
-    FormDescription,
-    FormField,
-    FormItem,
-    FormLabel,
-    FormMessage,
-} from "@/components/ui/form";
+import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from "@/components/ui/form";
 import {Input} from "@/components/ui/input";
 import {Textarea} from "@/components/ui/textarea.tsx";
 import FileUploader from "@/components/shared/FileUploader.tsx";
+import {PostValidation} from "@/lib/validation";
+import {Models} from "appwrite";
+import {useCreatePost} from "@/lib/react-query/queriesAndutations.ts";
+import {useUserContext} from "@/context/AuthContext.tsx";
+import {useToast} from "@/hooks/use-toast.ts";
+import {useNavigate} from "react-router-dom";
 
-const formSchema = z.object({
-    username: z.string().min(2, {
-        message: "Username must be at least 2 characters.",
-    }),
-});
+type PostFormProps = {
+    post?: Models.Document
+}
 
-const PostForm = ({post}) => {
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+const PostForm = ({post}: PostFormProps) => {
+    const {mutateAsync: createPost, isPending: isLoadingCreate} = useCreatePost();
+    const {user} = useUserContext();
+    const {toast} = useToast();
+    const navigate = useNavigate();
+
+    const form = useForm<z.infer<typeof PostValidation>>({
+        resolver: zodResolver(PostValidation),
         defaultValues: {
-            username: "",
+            caption: post ? post?.caption : "",
+            file: [],
+            location: post ? post?.location : "",
+            tags: post ? post.tags.join(",") : ""
         },
     })
 
     // 2. Define a submit handler.
-    const onSubmit = (values: z.infer<typeof formSchema>) => {
-        // Do something with the form values.
-        // ✅ This will be type-safe and validated.
-        console.log(values)
+    const onSubmit = async (values: z.infer<typeof PostValidation>) => {
+        const newPost = await createPost({
+            ...values,
+            userId: user.id
+        });
+
+        if (!newPost) {
+            return toast({
+                title: "Failed to create Post"
+            })
+        }
+        navigate('/');
     }
 
     return (
@@ -59,7 +71,7 @@ const PostForm = ({post}) => {
                         <FormItem>
                             <FormLabel className="shad-form_label">Add Photos</FormLabel>
                             <FormControl>
-                                <FileUploader filedChange={field.onChange} mediaUrl={post?.imageUrl}/>
+                                <FileUploader fieldChange={field.onChange} mediaUrl={post?.imageUrl}/>
                             </FormControl>
                             <FormMessage className="shad-form_message"/>
                         </FormItem>
@@ -72,7 +84,7 @@ const PostForm = ({post}) => {
                         <FormItem>
                             <FormLabel className="shad-form_label">Add Location</FormLabel>
                             <FormControl>
-                                <Input type="text" className="shad-input"/>
+                                <Input type="text" className="shad-input" {...field}/>
                             </FormControl>
                             <FormMessage className="shad-form_message"/>
                         </FormItem>
@@ -85,7 +97,8 @@ const PostForm = ({post}) => {
                         <FormItem>
                             <FormLabel className="shad-form_label">Tags (seperated by ",")</FormLabel>
                             <FormControl>
-                                <Input type="text" className="shad-input" placeholder="Art, Expression, Learn"/>
+                                <Input type="text" className="shad-input"
+                                       placeholder="Art, Expression, Learn" {...field}/>
                             </FormControl>
                             <FormMessage className="shad-form_message"/>
                         </FormItem>
