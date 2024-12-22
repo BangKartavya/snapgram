@@ -28,7 +28,7 @@ const SignupForm = () => {
             email: "",
             password: ""
         },
-    })
+    });
 
     // 2. Define a submit handler.
     const onSubmit = async (values: z.infer<typeof SignupValidation>) => {

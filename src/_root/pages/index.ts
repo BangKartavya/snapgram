@@ -6,5 +6,5 @@ export {default as Profile} from './Profile';
 export {default as UpdateProfile} from './UpdateProfile';
 export {default as EditPost} from './EditPost';
 export {default as PostDetails} from './PostDetails';
-export {default as LikePosts} from './LikePosts';
+export {default as LikePosts} from './LikedPosts.tsx';
 export {default as AllUsers} from './AllUsers';
