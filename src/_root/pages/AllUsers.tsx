@@ -9,7 +9,8 @@ const AllUsers = () => {
     const {data: users, isPending: isUserLoading, isError: isErrorUsers} = useGetUsers();
 
     if (isErrorUsers) {
-        return toast({title: "Something went wrong"});
+        toast({title: "Something went wrong"});
+        return;
     }
 
     return (
